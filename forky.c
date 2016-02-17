@@ -1,21 +1,32 @@
+/*
+ * Parallel evaluation of arithmetic expressions
+ * Program: forky.c
+ * Class: CIS 452
+ * Instructor: Dr. Dulimarta
+ * Author: Zak Walton
+ */
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 
-//#define DEBUG
 #define DEBUG
 
 #define SIZE 50
 char** stack;
-int top=-1;       /* Global declarations */
-//
-//   Your other functions
-//   and variables
-//
-//   should go here
-//
+int top=-1;
+
+//Type for each node in the expression tree
+typedef struct element_s element_t;
+struct element_s{
+    char* operator;
+    float value;
+    element_t* leftChild;
+    element_t* rightChild;
+};
+
 void push(char* elem)
 {                       /* Function for PUSH operation */
     stack[++top]=elem;
@@ -176,7 +187,7 @@ int main()
     //
 
     /* 8< 8< 8< begin-cut-here >8 >8 >8 */
-    printf ("Test 1 %f\n", evaluate ("2.0 * 3.0", true));
+    printf ("Test 1 %f\n", evaluate ("2.0", true));
     printf ("Test 2 %f\n", evaluate ("200.0 + 300.0", true));
     printf ("Test 3 %f\n", evaluate ("10.0 / 5.0", true));
     printf ("Test 4 %f\n", evaluate ("2.0 * 3.0 + 4.0 / 5.0", true));
