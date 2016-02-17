@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#define DEBUG
+
 #define SIZE 50
-char* stack;
+char** stack;
 int top=-1;       /* Global declarations */
 //
 //   Your other functions
@@ -13,28 +15,31 @@ int top=-1;       /* Global declarations */
 //
 //   should go here
 //
-void push(char elem)
+void push(char* elem)
 {                       /* Function for PUSH operation */
     stack[++top]=elem;
 }
 
-char pop()
+char* pop()
 {                      /* Function for POP operation */
     return(stack[top--]);
 }
 
-int pr(char elem)
+int pr(char* elem)
 {                 /* Function for precedence */
-    switch(elem)
+    switch(elem[0])
     {
-    case '#': return 0;
-    case ')': return 1;
+    case '-':
+        return 1;
     case '+':
-    case '-': return 2;
+        return 2;
+    case '/':
+        return 3;
     case '*':
-    case '/': return 3;
+        return 4;
+    default:
+        return 0;
     }
-    return 0;
 }
 
 char** reverseArray(char** input, int length)
@@ -51,11 +56,13 @@ char** reverseArray(char** input, int length)
 
 }
 
-void infixToPrefix(char* infx)
+char** infixToPrefix(char* infx, int* size)
 {                         /* Main Program */
-    char prfx[50],ch,elem;
     char** tokString;
+    char** prfx;
     char* token;
+    char* ch;
+    char* elem;
     int i=0,k=0;
     int numElements = 0;
 
@@ -68,79 +75,92 @@ void infixToPrefix(char* infx)
         }
     }
     numElements++;
+#ifdef DEBUG
     printf("Number of elements is: %d\n",numElements);
+#endif
 
     //Malloc array to store each each expression element as well as operator stack
     tokString = (char **)malloc(numElements*sizeof(char*));
-    stack = (char *)malloc(numElements*sizeof(char));
+    prfx = (char **)malloc(numElements*sizeof(char*));
+    stack = (char **)malloc(numElements*sizeof(char*));
 
     //Split infix string up into an array of string elements
     token = strtok(infx, " ");
     i = 0;
     tokString[i] = token;
-    while((token = strtok(NULL, " ")))
+    while((token = strtok(NULL, " \n")))
     {
-       i++;
-       tokString[i] = token;
+        i++;
+        tokString[i] = token;
     }
 
+#ifdef DEBUG
     for( i = 0 ; i < numElements ; i++)
     {
         printf("%s\n",tokString[i]);
     }
+#endif
 
     //Push # on stack to indicate first operator
-    push('#');
+    push("#\0");
 
     //Reverse array of string elements
     tokString = reverseArray(tokString, numElements);
 
+#ifdef DEBUG
     for( i = 0 ; i < numElements ; i++)
     {
         printf("%s\n",tokString[i]);
     }
+#endif
 
-
-    return;
-
-    /*
-    push('#');
-    strrev(infx);
-    while( (ch=infx[i++]) != '\0')
+    i = 0;
+    k = 0;
+    while(i < numElements )
     {
-        if( ch == ')') push(ch);
+        ch = tokString[i];
+        i++;
+        if(pr(ch))
+        {
+            prfx[k++]=ch;
+        }
         else
-            if(isalnum(ch)) prfx[k++]=ch;
-            else
-                if( ch == '(')
-                {
-                    while( stack[top] != ')')
-                        prfx[k++]=pop();
-                    elem=pop(); // Remove )
-                }
-                else
-                {       // Operator
-                    while( pr(stack[top]) >= pr(ch) )
-                        prfx[k++]=pop();
-                    push(ch);
-                }
+        {
+            while( pr(stack[top]) >= pr(ch) )
+                prfx[k++]=pop();
+            push(ch);
+        }
     }
-    while( stack[top] != '#')     // Pop from stack till empty
+    // Pop from stack till empty
+    while( pr(stack[top]))
+    {
         prfx[k++]=pop();
-    prfx[k]='\0';          // Make prfx as valid string
-    strrev(prfx);
-    strrev(infx);
-    printf("\n\nGiven Infix Expn: %s  Prefix Expn: %s\n",infx,prfx);
-    */
+    }
+    prfx = reverseArray(prfx, numElements);
+    tokString = reverseArray(tokString, numElements);
+    *size = numElements;
+
+#ifdef DEBUG
+    printf("\nHere is the infix version\n");
+    for( i = 0 ; i < numElements ; i++)
+    {
+        printf("%s\n",prfx[i]);
+    }
+#endif
+    free(tokString);
+    free(stack);
+    return prfx;
 }
 
 float evaluate (const char* expr, bool immediate_result)
 {
+    char** prefix;
     char inputStr[strlen(expr)+1];
+    int size;
     //Copy in input string
     strcpy(inputStr, expr);
     //Convert input string to prefix
-    infixToPrefix(inputStr);
+    prefix = infixToPrefix(inputStr, &size);
 
     return 0.0;  /* replace it with your own */
 }
