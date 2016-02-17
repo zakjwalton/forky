@@ -13,19 +13,30 @@
 #include <ctype.h>
 
 #define DEBUG
-
 #define SIZE 50
-char** stack;
-int top=-1;
 
 //Type for each node in the expression tree
-typedef struct element_s element_t;
-struct element_s{
-    char* operator;
+typedef struct element_s{
+    char operator;
     float value;
-    element_t* leftChild;
-    element_t* rightChild;
-};
+    struct element_s* leftChild;
+    struct element_s* rightChild;
+}element_t;
+
+char** stack;
+int top=-1;
+element_t* treeTop;
+
+
+void printCharStarStar(char** ary, int size)
+{
+    int i;
+    for( i = 0 ; i < size ; i++)
+    {
+        printf("%s ",ary[i]);
+    }
+    printf("\n");
+}
 
 void push(char* elem)
 {                       /* Function for PUSH operation */
@@ -106,11 +117,7 @@ char** infixToPrefix(char* infx, int* size)
     }
 
 #ifdef DEBUG
-    for( i = 0 ; i < numElements ; i++)
-    {
-        printf("%s ",tokString[i]);
-    }
-    printf("\n");
+    printCharStarStar(tokString, numElements);
 #endif
 
     //Push # on stack to indicate first operator
@@ -120,11 +127,7 @@ char** infixToPrefix(char* infx, int* size)
     tokString = reverseArray(tokString, numElements);
 
 #ifdef DEBUG
-    for( i = 0 ; i < numElements ; i++)
-    {
-        printf("%s ",tokString[i]);
-    }
-    printf("\n");
+    printCharStarStar(tokString, numElements);
 #endif
 
     i = 0;
@@ -155,18 +158,54 @@ char** infixToPrefix(char* infx, int* size)
 
 #ifdef DEBUG
     printf("Here is the infix version\n");
-    for( i = 0 ; i < numElements ; i++)
-    {
-        printf("%s ",prfx[i]);
-    }
-    printf("\n");
+    printCharStarStar(prfx, numElements);
 #endif
     free(tokString);
     free(stack);
     return prfx;
 }
 
-float evaluate (const char* expr, bool immediate_result)
+char** createTree(char** prfx, element_t** node)
+{
+    char** temp = NULL;
+    //Allocate memory for this node
+    *node = (element_t*)malloc(sizeof(element_t));
+    if(!pr(prfx[0]))
+    {
+        //If it's a number, parse the float and return the next prefix element
+        (*node)->operator = '=';
+        (*node)->value = atof(prfx[0]);
+        (*node)->rightChild = NULL;
+        (*node)->leftChild = NULL;
+        return &prfx[1];
+    }
+    else
+    {
+        //If it's an operator, set the operator and recurse to create the left
+        //and right branches
+        (*node)->operator = prfx[0][0];
+        (*node)->value = -1;
+        temp = createTree(&prfx[1], &(*node)->leftChild);
+        return createTree(temp, &(*node)->rightChild);
+    }
+}
+
+//print tree
+void printTree(element_t* node)
+{
+    if(node->value >= 0)
+    {
+        printf("I'm a value: %f\n",node->value);
+    }
+    else
+    {
+        printf("I'm an operator: %c\n",node->operator);
+        printTree(node->leftChild);
+        printTree(node->rightChild);
+    }
+}
+
+float evaluate(const char* expr, bool immediate_result)
 {
     char** prefix;
     char inputStr[strlen(expr)+1];
@@ -175,9 +214,17 @@ float evaluate (const char* expr, bool immediate_result)
     strcpy(inputStr, expr);
     //Convert input string to prefix
     prefix = infixToPrefix(inputStr, &size);
+    //Construct tree from expression in prefix
+    createTree(prefix, &treeTop);
+    free(prefix);
+#ifdef DEBUG
+    printTree(treeTop);
+#endif
+
 
     return 0.0;  /* replace it with your own */
 }
+
 
 int main()
 {
@@ -190,7 +237,7 @@ int main()
     printf ("Test 1 %f\n", evaluate ("2.0", true));
     printf ("Test 2 %f\n", evaluate ("200.0 + 300.0", true));
     printf ("Test 3 %f\n", evaluate ("10.0 / 5.0", true));
-    printf ("Test 4 %f\n", evaluate ("2.0 * 3.0 + 4.0 / 5.0", true));
+    printf ("Test 4 %f\n", evaluate ("2.0 + 3.0 * 4.0 - 5.0 / 6.0", true));
     /* add more test of your own */
     /* 8< 8< 8< end-cut-here >8 >8 >8 */
     return 0;
