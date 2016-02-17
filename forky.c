@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+//#define DEBUG
 #define DEBUG
 
 #define SIZE 50
@@ -62,7 +63,6 @@ char** infixToPrefix(char* infx, int* size)
     char** prfx;
     char* token;
     char* ch;
-    char* elem;
     int i=0,k=0;
     int numElements = 0;
 
@@ -76,7 +76,7 @@ char** infixToPrefix(char* infx, int* size)
     }
     numElements++;
 #ifdef DEBUG
-    printf("Number of elements is: %d\n",numElements);
+    printf("\nNumber of elements is: %d\n",numElements);
 #endif
 
     //Malloc array to store each each expression element as well as operator stack
@@ -97,12 +97,13 @@ char** infixToPrefix(char* infx, int* size)
 #ifdef DEBUG
     for( i = 0 ; i < numElements ; i++)
     {
-        printf("%s\n",tokString[i]);
+        printf("%s ",tokString[i]);
     }
+    printf("\n");
 #endif
 
     //Push # on stack to indicate first operator
-    push("#\0");
+    push("#");
 
     //Reverse array of string elements
     tokString = reverseArray(tokString, numElements);
@@ -110,8 +111,9 @@ char** infixToPrefix(char* infx, int* size)
 #ifdef DEBUG
     for( i = 0 ; i < numElements ; i++)
     {
-        printf("%s\n",tokString[i]);
+        printf("%s ",tokString[i]);
     }
+    printf("\n");
 #endif
 
     i = 0;
@@ -120,7 +122,7 @@ char** infixToPrefix(char* infx, int* size)
     {
         ch = tokString[i];
         i++;
-        if(pr(ch))
+        if(!pr(ch))
         {
             prfx[k++]=ch;
         }
@@ -141,11 +143,12 @@ char** infixToPrefix(char* infx, int* size)
     *size = numElements;
 
 #ifdef DEBUG
-    printf("\nHere is the infix version\n");
+    printf("Here is the infix version\n");
     for( i = 0 ; i < numElements ; i++)
     {
-        printf("%s\n",prfx[i]);
+        printf("%s ",prfx[i]);
     }
+    printf("\n");
 #endif
     free(tokString);
     free(stack);
@@ -176,7 +179,7 @@ int main()
     printf ("Test 1 %f\n", evaluate ("2.0 * 3.0", true));
     printf ("Test 2 %f\n", evaluate ("200.0 + 300.0", true));
     printf ("Test 3 %f\n", evaluate ("10.0 / 5.0", true));
-    printf ("Test 4 %f\n", evaluate ("16.0 - 10.5 - 12.3 + 54.2", true));
+    printf ("Test 4 %f\n", evaluate ("2.0 * 3.0 + 4.0 / 5.0", true));
     /* add more test of your own */
     /* 8< 8< 8< end-cut-here >8 >8 >8 */
     return 0;
