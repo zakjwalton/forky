@@ -329,7 +329,6 @@ float evalExpression(element_t* node)
             write(fdl[WRITE], (const void *)&resultLeft, (size_t) sizeof(float));
             close(fdl[WRITE]);
             //Exit
-            freeTree(treeTop);
             exit(0);
         }
         else // Parent
