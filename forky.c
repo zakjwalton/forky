@@ -147,9 +147,9 @@ char** infixToPrefix(char* infx, int* size)
 #endif
 
     //Malloc array to store each each expression element as well as operator stack
-    tokString = (char **)malloc((numElements+10)*sizeof(char*));
-    prfx = (char **)malloc((numElements+10)*sizeof(char*));
-    stack = (char **)malloc((numElements+10)*sizeof(char*));
+    tokString = (char **)malloc((numElements+100)*sizeof(char*));
+    prfx = (char **)malloc((numElements+100)*sizeof(char*));
+    stack = (char **)malloc((numElements+100)*sizeof(char*));
 
     //Split infix string up into an array of string elements
     token = strtok(infx, " ");
@@ -173,7 +173,7 @@ char** infixToPrefix(char* infx, int* size)
 #endif
 
     //Push # on stack to indicate first operator
-    push("# ");
+    push("#");
     i = 0;
     k = 0;
     while(i < numElements )
