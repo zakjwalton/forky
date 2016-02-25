@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <sys/wait.c>
+#include <sys/wait.h>
 
 //#define DEBUG
 #define SIZE 50
@@ -32,7 +32,6 @@ typedef struct element_s{
 //Globals
 char** stack;
 int top = -1;
-element_t* treeTop;
 
 /*
  * Function that prints out an array of strings.
@@ -237,6 +236,22 @@ void printTree(element_t* node)
     }
 }
 
+void freeTree(element_t* node)
+{
+    if(node->operator == '=')
+    {
+        free(node);
+    }
+    else
+    {
+        freeTree(node->rightChild);
+        freeTree(node->leftChild);
+        free(node);
+    }
+    return;
+}
+
+
 float evalExpression(element_t* node)
 {
     return 23.00;
@@ -245,6 +260,7 @@ float evalExpression(element_t* node)
 
 float evaluate(const char* expr, bool immediate_result)
 {
+    element_t* treeTop;
     char** prefix;
     char inputStr[strlen(expr)+1];
     int size;
@@ -264,6 +280,7 @@ float evaluate(const char* expr, bool immediate_result)
     printTree(treeTop);
 #endif
 
+    printf("Willy nilly\n");
     //No operators in the tree
     if(treeTop->operator == '=')
     {
@@ -295,6 +312,7 @@ float evaluate(const char* expr, bool immediate_result)
             close(fd[WRITE]);
             //Exit
             sleep(1);
+            freeTree(treeTop);
             exit(0);
         }
         else // Parent
@@ -316,10 +334,11 @@ float evaluate(const char* expr, bool immediate_result)
 #ifdef DEBUG
             printf("Result is %f\n",result);
 #endif
-
         }
     }
 
+    //Free tree structure
+    freeTree(treeTop);
     return result;  /* replace it with your own */
 }
 
