@@ -284,6 +284,7 @@ float evaluate(const char* expr, bool immediate_result)
     //No operators in the tree
     if(treeTop->operator == '=')
     {
+        freeTree(treeTop);
         return treeTop->value;
     }
     else
@@ -330,7 +331,7 @@ float evaluate(const char* expr, bool immediate_result)
                 printf("Child terminated, pid: %d\n",wpid);
             }
             read(fd[READ], (void *)&result, (size_t) sizeof(float));
-            //close(fd[READ]);
+            close(fd[READ]);
 #ifdef DEBUG
             printf("Result is %f\n",result);
 #endif
@@ -356,7 +357,7 @@ int main()
     printf ("Test 3 %f\n", evaluate ("200.0 + 300.0", true));
     printf ("Test 4 %f\n", evaluate ("2.0 * 3.0 + 4.0 / 5.0", true));
     printf ("Test 5 %f\n", evaluate ("2.0 + 3.0 * 4.0 - 5.0 / 6.0", true));
-    printf ("Test 5 %f\n", evaluate ("2.0", true));
+    printf ("Test 5 %f\n", evaluate ("2.0 + 15.0", true));
     /* add more test of your own */
     /* 8< 8< 8< end-cut-here >8 >8 >8 */
     return 0;
