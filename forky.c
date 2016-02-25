@@ -17,7 +17,7 @@
 #include <sys/wait.h>
 
 //Macros
-#define DEBUG
+//#define DEBUG
 
 #define SIZE 50
 
@@ -48,12 +48,10 @@ bool sigUsrFlag = false;
 void sigIntHandler(int signum)
 {
     sigIntFlag = true;
-    printf("In sigint handler\n");
 }
 void sigUsrHandler(int signum)
 {
     sigUsrFlag = true;
-    printf("In sigusr handler\n");
 }
 
 /*
@@ -163,10 +161,9 @@ char** infixToPrefix(char* infx, int* size)
         tokString[i] = token;
     }
 
-#ifdef DEBUG
+    //Print the original expression
+    printf("\nHere is the infix version\n");
     printCharStarStar(tokString, numElements);
-#endif
-
 
     //Reverse array of string elements
     tokString = reverseArray(tokString, numElements);
@@ -203,10 +200,10 @@ char** infixToPrefix(char* infx, int* size)
     tokString = reverseArray(tokString, numElements);
     *size = numElements;
 
-#ifdef DEBUG
+    //Print prefix version
     printf("Here is the prefix version\n");
     printCharStarStar(prfx, numElements);
-#endif
+
     free(tokString);
     free(stack);
     return prfx;
@@ -294,6 +291,8 @@ float evalExpression(element_t* node)
     pid_t pidl, wpidl;
     pid_t pidr, wpidr;
 
+    printf("I'm a child with pid->%d, and my operator is: %c\n",getpid(),node->operator);
+
     //Check left, recurse if necessary
     if(leftNode->operator == '=')
     {
@@ -335,6 +334,7 @@ float evalExpression(element_t* node)
         {
             //Close write end of the pipe
             close(fdl[WRITE]);
+            printf("I'm also a parent with pid->%d and my left child has pid->%d\n",getpid(),pidl);
         }
     }
 
@@ -378,6 +378,7 @@ float evalExpression(element_t* node)
         {
             //Close write end of the pipe
             close(fdr[WRITE]);
+            printf("I'm also a parent with pid->%d and my right child has pid->%d\n",getpid(),pidr);
         }
     }
 
@@ -408,10 +409,6 @@ float evalExpression(element_t* node)
             perror("Error while waiting");
             exit(1);
         }
-        else
-        {
-            printf("Child terminated, pid: %d\n",wpidl);
-        }
         //Read left result
         read(fdl[READ], (void *)&resultLeft, (size_t) sizeof(float));
         close(fdl[READ]);
@@ -429,10 +426,6 @@ float evalExpression(element_t* node)
             perror("Error while waiting");
             exit(1);
         }
-        else
-        {
-            printf("Child terminated, pid: %d\n",wpidr);
-        }
         //Read right result
         read(fdr[READ], (void *)&resultRight, (size_t) sizeof(float));
         close(fdr[READ]);
@@ -441,31 +434,28 @@ float evalExpression(element_t* node)
 #endif
     }
 
-    //compute and return result
     //Return case based on operator
     switch(node->operator)
     {
     case '/':
-        //Free whole tree
         freeTree(treeTop);
+        printf("My pid->%d and I'm returning %f\n",getpid(),resultLeft/resultRight);
         return resultLeft / resultRight;
     case '*':
-        //Free whole tree
         freeTree(treeTop);
+        printf("My pid->%d and I'm returning %f\n",getpid(),resultLeft*resultRight);
         return resultLeft * resultRight;
     case '-':
-        //Free whole tree
         freeTree(treeTop);
+        printf("My pid->%d and I'm returning %f\n",getpid(),resultLeft-resultRight);
         return resultLeft - resultRight;
     case '+':
-        //Free whole tree
         freeTree(treeTop);
+        printf("My pid->%d and I'm returning %f\n",getpid(),resultLeft+resultRight);
         return resultLeft + resultRight;
     default:
-        //Free whole tree
-        freeTree(treeTop);
         printf("Error, invalid operator\n");
-        return 0.0;
+        return 0;
     }
 }
 
@@ -538,6 +528,8 @@ float evaluate(const char* expr, bool immediate_result)
         {
             //Close write end of the pipe
             close(fd[WRITE]);
+            //Print parent and child relationship
+            printf("I'm the top level parent with pid->%d and I spawned a child with pid->%d\n",getpid(), pid);
 
             //Wait on SIGINT, then notify child if pause enabled
             if(!noPause)
@@ -557,10 +549,6 @@ float evaluate(const char* expr, bool immediate_result)
                 perror("Error while waiting");
                 exit(1);
             }
-            else
-            {
-                printf("Child terminated, pid: %d\n",wpid);
-            }
 
             //Read in result from pipe
             read(fd[READ], (void *)&result, (size_t) sizeof(float));
@@ -573,7 +561,7 @@ float evaluate(const char* expr, bool immediate_result)
 
     //Free tree structure
     freeTree(treeTop);
-    return result;  /* replace it with your own */
+    return result;
 }
 
 
