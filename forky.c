@@ -569,14 +569,104 @@ int main()
 {
 
     /* 8< 8< 8< begin-cut-here >8 >8 >8 */
+    /*
     printf ("Test 1 %f\n", evaluate ("2.0 + 3.0 + 4.0 + 5.0", false));
     printf ("Test 2 %f\n", evaluate ("2.0 + 3.0 + 4.0 + 5.0", false));
     printf ("Test 3 %f\n", evaluate ("200.0 + 300.0", false));
     printf ("Test 4 %f\n", evaluate ("2.0 * 3.0 + 4.0 / 5.0", false));
     printf ("Test 5 %f\n", evaluate ("2.0 + 3.0 * 4.0 - 5.0 / 6.0", false));
     printf ("Test 5 %f\n", evaluate ("2.0 + 15.0", false));
+    */
     /* add more test of your own */
     /* 8< 8< 8< end-cut-here >8 >8 >8 */
+    // 1 operator 
+    printf("Test  1 ===> %7.3f\n", evaluate("4.0 - 3.0", true));
+    printf("Test  2 ===> %7.3f\n", evaluate("19.0 - 17.0", true));
+    printf("Test  3 ===> %7.3f\n", evaluate("10.0 - 7.0", true));
+    printf("Test  4 ===> %7.3f\n", evaluate("15.0 - 11.0", true));
+    printf("Test  5 ===> %7.3f\n", evaluate("8.0 - 3.0", true));
+    printf("Test  6 ===> %7.3f\n", evaluate("18.0 - 12.0", true));
+    printf("Test  7 ===> %7.3f\n", evaluate("16.0 - 9.0", true));
+    printf("Test  8 ===> %7.3f\n", evaluate("4.0 + 4.0", true));
+    printf("Test  9 ===> %7.3f\n", evaluate("16.0 - 7.0", true));
+    printf("Test 10 ===> %7.3f\n", evaluate("12.0 - 2.0", true));
+    // 2 operators 
+    printf("Test 11 ===> %7.3f\n", evaluate("73.3 + 9.0 - 71.3", true));
+    printf("Test 12 ===> %7.3f\n", evaluate("114.0 / 1.0 - 102.0", true));
+    printf("Test 13 ===> %7.3f\n", evaluate("129.0 + 17.0 - 133.0", true));
+    printf("Test 14 ===> %7.3f\n", evaluate("33.3 - 15.0 - 4.3", true));
+    printf("Test 15 ===> %7.3f\n", evaluate("58.4 + 6.0 - 49.4", true));
+    printf("Test 16 ===> %7.3f\n", evaluate("82.1 * 2.0 - 148.2", true));
+    printf("Test 17 ===> %7.3f\n", evaluate("90.4 + 19.0 - 92.4", true));
+    printf("Test 18 ===> %7.3f\n", evaluate("35.2 / 10.0 + 14.48", true));
+    printf("Test 19 ===> %7.3f\n", evaluate("133.5 + 10.0 - 124.5", true));
+    printf("Test 20 ===> %7.3f\n", evaluate("145.3 / 19.0 + 12.3526315789", true));
+    // 3 operators 
+    printf("Test 21 ===> %7.3f\n", evaluate("23.1 * 40.8 + 17.0 - 938.48", true));
+    printf("Test 22 ===> %7.3f\n", evaluate("179.9 * 188.9 / 6.0 - 5641.85166667", true));
+    printf("Test 23 ===> %7.3f\n", evaluate("79.0 / 75.9 * 8.0 + 14.6732542819", true));
+    printf("Test 24 ===> %7.3f\n", evaluate("118.2 * 163.0 * 5.0 - 96309.0", true));
+    printf("Test 25 ===> %7.3f\n", evaluate("25.5 * 10.7 - 5.0 - 242.85", true));
+    printf("Test 26 ===> %7.3f\n", evaluate("136.1 + 193.9 / 16.0 - 122.21875", true));
+    printf("Test 27 ===> %7.3f\n", evaluate("177.2 + 119.3 - 18.0 - 251.5", true));
+    printf("Test 28 ===> %7.3f\n", evaluate("2.8 / 11.9 + 17.0 + 10.7647058824", true));
+    printf("Test 29 ===> %7.3f\n", evaluate("191.5 + 80.2 * 2.0 - 322.9", true));
+    printf("Test 30 ===> %7.3f\n", evaluate("71.7 * 145.1 + 5.0 - 10378.67", true));
+    // 4 operators 
+    printf("Test 31 ===> %7.3f\n", evaluate("182.0 + 68.2 / 18.2 - 18.0 - 136.747252747", true));
+    printf("Test 32 ===> %7.3f\n", evaluate("111.3 - 102.2 / 154.3 / 3.0 - 79.0792179736", true));
+    printf("Test 33 ===> %7.3f\n", evaluate("174.1 - 176.7 + 106.0 - 10.0 - 60.4", true));
+    printf("Test 34 ===> %7.3f\n", evaluate("138.1 / 52.5 - 150.4 + 15.0 + 166.76952381", true));
+    printf("Test 35 ===> %7.3f\n", evaluate("108.7 - 31.6 - 195.9 / 7.0 - 14.1142857143", true));
+    printf("Test 36 ===> %7.3f\n", evaluate("35.3 - 30.6 - 75.3 - 13.0 + 119.6", true));
+    printf("Test 37 ===> %7.3f\n", evaluate("127.4 - 156.7 * 74.1 / 10.0 + 1070.747", true));
+    printf("Test 38 ===> %7.3f\n", evaluate("137.2 - 66.3 + 63.1 - 8.0 - 88.0", true));
+    printf("Test 39 ===> %7.3f\n", evaluate("139.8 - 44.0 + 190.3 + 5.0 - 252.1", true));
+    printf("Test 40 ===> %7.3f\n", evaluate("102.5 / 162.3 * 2.6 * 5.0 + 31.7898952557", true));
+    // 5 operators 
+    printf("Test 41 ===> %7.3f\n", evaluate("3.5 / 146.3 + 103.2 - 6.7 / 6.0 - 61.1072567783", true));
+    printf("Test 42 ===> %7.3f\n", evaluate("2.7 * 64.8 + 62.3 * 162.0 - 19.0 - 10206.56", true));
+    printf("Test 43 ===> %7.3f\n", evaluate("187.4 + 81.8 - 150.7 / 100.1 - 1.0 - 223.694505495", true));
+    printf("Test 44 ===> %7.3f\n", evaluate("41.2 + 154.7 * 24.5 * 25.3 / 10.0 - 9586.2795", true));
+    printf("Test 45 ===> %7.3f\n", evaluate("37.2 / 100.3 * 8.3 / 115.2 + 20.0 + 24.9732780824", true));
+    printf("Test 46 ===> %7.3f\n", evaluate("114.0 - 146.1 / 157.9 / 71.0 * 5.0 - 67.9348402002", true));
+    printf("Test 47 ===> %7.3f\n", evaluate("97.1 + 99.6 / 177.9 * 28.4 - 18.0 - 48.0001686341", true));
+    printf("Test 48 ===> %7.3f\n", evaluate("116.3 / 159.9 - 172.6 - 50.7 + 17.0 + 253.572670419", true));
+    printf("Test 49 ===> %7.3f\n", evaluate("200.4 / 80.9 / 58.6 - 57.0 * 7.0 + 447.957728118", true));
+    printf("Test 50 ===> %7.3f\n", evaluate("127.1 - 188.2 * 149.5 / 37.3 + 13.0 + 664.213672922", true));
+    // 6 operators 
+    printf("Test 51 ===> %7.3f\n", evaluate("62.3 + 186.3 * 3.4 * 39.7 / 93.2 + 20.0 - 301.115171674", true));
+    printf("Test 52 ===> %7.3f\n", evaluate("176.5 - 148.2 + 190.9 - 100.8 * 142.7 - 16.0 + 14232.96", true));
+    printf("Test 53 ===> %7.3f\n", evaluate("154.5 - 71.4 / 44.5 * 180.3 * 167.3 / 1.0 + 48296.7733933", true));
+    printf("Test 54 ===> %7.3f\n", evaluate("165.5 - 191.8 - 6.0 / 25.7 + 113.5 * 5.0 - 486.966536965", true));
+    printf("Test 55 ===> %7.3f\n", evaluate("176.0 / 192.4 * 44.6 + 100.7 * 163.2 / 5.0 - 3272.6463368", true));
+    printf("Test 56 ===> %7.3f\n", evaluate("150.9 + 12.6 * 172.4 + 53.6 - 40.0 * 8.0 - 2000.74", true));
+    printf("Test 57 ===> %7.3f\n", evaluate("34.9 - 185.8 + 15.7 - 125.8 / 95.2 + 12.0 + 181.521428571", true));
+    printf("Test 58 ===> %7.3f\n", evaluate("137.3 / 57.8 * 85.5 / 134.0 * 50.3 + 12.0 - 30.2380887517", true));
+    printf("Test 59 ===> %7.3f\n", evaluate("162.6 + 154.2 - 28.5 * 4.3 - 181.3 + 9.0 + 37.05", true));
+    printf("Test 60 ===> %7.3f\n", evaluate("98.2 - 152.3 + 15.2 + 3.8 / 94.4 * 13.0 + 98.3766949153", true));
+    // 7 operators 
+    printf("Test 61 ===> %7.3f\n", evaluate("63.4 + 6.5 / 180.9 - 19.9 * 70.4 * 172.3 * 13.0 + 3138007.86807", true));
+    printf("Test 62 ===> %7.3f\n", evaluate("61.3 + 165.4 + 156.1 + 63.0 * 112.3 + 63.2 - 20.0 - 7438.9", true));
+    printf("Test 63 ===> %7.3f\n", evaluate("56.3 - 78.1 - 177.0 - 9.7 + 66.9 - 173.6 + 17.0 + 361.2", true));
+    printf("Test 64 ===> %7.3f\n", evaluate("133.7 - 21.4 + 122.7 / 38.2 * 14.8 + 43.7 * 19.0 - 926.138219895", true));
+    printf("Test 65 ===> %7.3f\n", evaluate("162.2 - 130.2 - 11.2 - 68.4 + 136.5 * 55.7 - 9.0 - 7481.45", true));
+    printf("Test 66 ===> %7.3f\n", evaluate("140.3 - 144.9 * 127.7 * 178.3 + 137.1 - 52.4 / 13.0 + 3299007.68977", true));
+    printf("Test 67 ===> %7.3f\n", evaluate("180.2 - 98.9 - 83.1 / 55.6 + 183.2 * 186.3 / 7.0 - 4888.54253854", true));
+    printf("Test 68 ===> %7.3f\n", evaluate("3.3 * 77.1 * 33.9 + 25.3 - 10.2 - 199.7 - 13.0 - 8359.577", true));
+    printf("Test 69 ===> %7.3f\n", evaluate("35.1 - 46.0 / 122.6 / 87.6 / 143.9 + 77.5 / 8.0 + 24.2125297648", true));
+    printf("Test 70 ===> %7.3f\n", evaluate("196.0 / 38.4 * 188.6 + 101.6 + 23.8 + 38.1 - 15.0 - 1041.14583333", true));
+    // 8 operators 
+    printf("Test 71 ===> %7.3f\n", evaluate("117.3 - 116.1 - 36.6 + 55.1 + 129.3 + 82.7 + 44.2 / 19.0 - 163.026315789", true));
+    printf("Test 72 ===> %7.3f\n", evaluate("199.2 - 5.6 + 21.4 * 167.1 * 151.2 - 53.3 * 181.4 + 4.0 - 531139.108", true));
+    printf("Test 73 ===> %7.3f\n", evaluate("133.9 * 73.0 / 176.0 + 174.6 - 93.4 + 157.4 / 12.6 * 7.0 - 151.182512626", true));
+    printf("Test 74 ===> %7.3f\n", evaluate("46.1 - 43.3 / 132.3 / 94.4 + 19.5 * 127.2 + 10.1 - 1.0 - 2461.59653298", true));
+    printf("Test 75 ===> %7.3f\n", evaluate("36.0 * 1.3 - 35.8 - 9.5 / 33.5 * 139.8 + 172.7 + 15.0 - 84.0552238806", true));
+    printf("Test 76 ===> %7.3f\n", evaluate("38.2 * 160.3 * 16.1 - 162.1 / 23.3 + 139.4 * 19.2 / 17.0 - 98662.1889185", true));
+    printf("Test 77 ===> %7.3f\n", evaluate("19.3 + 18.0 + 54.7 / 167.1 + 176.0 / 1.1 - 198.5 - 11.0 + 88.8726511071", true));
+    printf("Test 78 ===> %7.3f\n", evaluate("193.9 - 52.6 - 125.0 - 102.5 - 124.1 * 180.5 - 76.7 - 1.0 + 22641.95", true));
+    printf("Test 79 ===> %7.3f\n", evaluate("192.2 - 153.1 * 78.5 + 52.9 - 83.6 * 40.0 + 40.9 - 6.0 + 15161.35", true));
+    printf("Test 80 ===> %7.3f\n", evaluate("19.1 / 3.3 + 152.0 / 74.7 * 36.8 + 157.4 / 113.4 - 15.0 + 12.9432573971", true));
     return 0;
 }
 
