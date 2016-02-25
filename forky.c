@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <sys/wait.c>
 
 //#define DEBUG
 #define SIZE 50
