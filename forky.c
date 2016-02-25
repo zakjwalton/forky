@@ -8,12 +8,16 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 
-#define DEBUG
+//#define DEBUG
 #define SIZE 50
+
+#define READ 0
+#define WRITE 1
 
 //Type for each node in the expression tree
 typedef struct element_s{
@@ -23,11 +27,14 @@ typedef struct element_s{
     struct element_s* rightChild;
 }element_t;
 
+//Globals
 char** stack;
-int top=-1;
+int top = -1;
 element_t* treeTop;
 
-
+/*
+ * Function that prints out an array of strings.
+ */
 void printCharStarStar(char** ary, int size)
 {
     int i;
@@ -38,33 +45,46 @@ void printCharStarStar(char** ary, int size)
     printf("\n");
 }
 
+/*
+ * Function to push an operator on to the top of the stack
+ */
 void push(char* elem)
 {                       /* Function for PUSH operation */
     stack[++top]=elem;
 }
 
+/*
+ * Pop an operator off the top of the stack
+ */
 char* pop()
 {                      /* Function for POP operation */
     return(stack[top--]);
 }
 
+/*
+ * Evaluate the precedence of the element.  Return 0 if the element isn't an
+ * operator.
+ */
 int pr(char* elem)
 {                 /* Function for precedence */
     switch(elem[0])
     {
-    case '-':
-        return 1;
-    case '+':
-        return 2;
-    case '/':
-        return 3;
-    case '*':
-        return 4;
-    default:
+    case '#':
         return 0;
+    case '-':
+    case '+':
+        return 1;
+    case '/':
+    case '*':
+        return 2;
+    default:
+        return 3;
     }
 }
 
+/*
+ * Reverse an array of strings
+ */
 char** reverseArray(char** input, int length)
 {
     char** revInput = (char**)malloc(length*sizeof(char*));
@@ -79,6 +99,9 @@ char** reverseArray(char** input, int length)
 
 }
 
+/*
+ * Convert an infix string to an array of strings in prefix
+ */
 char** infixToPrefix(char* infx, int* size)
 {                         /* Main Program */
     char** tokString;
@@ -120,8 +143,6 @@ char** infixToPrefix(char* infx, int* size)
     printCharStarStar(tokString, numElements);
 #endif
 
-    //Push # on stack to indicate first operator
-    push("#");
 
     //Reverse array of string elements
     tokString = reverseArray(tokString, numElements);
@@ -130,34 +151,36 @@ char** infixToPrefix(char* infx, int* size)
     printCharStarStar(tokString, numElements);
 #endif
 
+    //Push # on stack to indicate first operator
+    push("# ");
     i = 0;
     k = 0;
     while(i < numElements )
     {
         ch = tokString[i];
         i++;
-        if(!pr(ch))
+        if(pr(ch) == 3)
         {
             prfx[k++]=ch;
         }
         else
         {
-            while( pr(stack[top]) >= pr(ch) )
+            while( pr(stack[top]) > pr(ch) )
                 prfx[k++]=pop();
             push(ch);
         }
     }
     // Pop from stack till empty
-    while( pr(stack[top]))
+    while(pr(stack[top]) != 0)
     {
-        prfx[k++]=pop();
+        prfx[k++] = pop();
     }
     prfx = reverseArray(prfx, numElements);
     tokString = reverseArray(tokString, numElements);
     *size = numElements;
 
 #ifdef DEBUG
-    printf("Here is the infix version\n");
+    printf("Here is the prefix version\n");
     printCharStarStar(prfx, numElements);
 #endif
     free(tokString);
@@ -165,12 +188,17 @@ char** infixToPrefix(char* infx, int* size)
     return prfx;
 }
 
+/*
+ * Create a tree of the expression to be evaluated, given an
+ * array of strings representing the arithmetic expression in
+ * prefix format as well as a pointer to the top node pointer.
+ */
 char** createTree(char** prfx, element_t** node)
 {
     char** temp = NULL;
     //Allocate memory for this node
     *node = (element_t*)malloc(sizeof(element_t));
-    if(!pr(prfx[0]))
+    if(pr(prfx[0]) == 3)
     {
         //If it's a number, parse the float and return the next prefix element
         (*node)->operator = '=';
@@ -190,7 +218,9 @@ char** createTree(char** prfx, element_t** node)
     }
 }
 
-//print tree
+/*
+ * Print the whole tree out given a pointer to the top node.
+ */
 void printTree(element_t* node)
 {
     if(node->value >= 0)
@@ -205,11 +235,22 @@ void printTree(element_t* node)
     }
 }
 
+float evalExpression(element_t* node)
+{
+    return 23.00;
+
+}
+
 float evaluate(const char* expr, bool immediate_result)
 {
     char** prefix;
     char inputStr[strlen(expr)+1];
     int size;
+    int status;
+    int fd[2];
+    float result;
+    pid_t pid, wpid;
+
     //Copy in input string
     strcpy(inputStr, expr);
     //Convert input string to prefix
@@ -221,8 +262,63 @@ float evaluate(const char* expr, bool immediate_result)
     printTree(treeTop);
 #endif
 
+    //No operators in the tree
+    if(treeTop->operator == '=')
+    {
+        return treeTop->value;
+    }
+    else
+    {
+        //Create pipe
+        if(pipe(fd) < 0)
+        {
+            perror("Problem creating the pipe");
+            exit(1);
+        }
 
-    return 0.0;  /* replace it with your own */
+        //Fork for top operator
+        if((pid = fork()) < 0)
+        {
+            perror("fork failed");
+            exit(1);
+        }
+        else if(pid == 0) // Child
+        {
+            //Close read end of pipe
+            close(fd[READ]);
+            //Evaluate expression
+            result = evalExpression(treeTop);
+            //Write result to pipe
+            write(fd[WRITE], (const void *)&result, (size_t) sizeof(float));
+            close(fd[WRITE]);
+            //Exit
+            sleep(1);
+            exit(0);
+        }
+        else // Parent
+        {
+            //Close write end of the pipe
+            close(fd[WRITE]);
+            wpid = wait(&status);
+            if(wpid < 0)
+            {
+                perror("Error while waiting");
+                exit(1);
+            }
+            else
+            {
+                printf("Child terminated, pid: %d\n",wpid);
+            }
+            read(fd[READ], (void *)&result, (size_t) sizeof(float));
+            //close(fd[READ]);
+#ifdef DEBUG
+            printf("Result is %f\n",result);
+#endif
+
+        }
+    }
+
+    return result;  /* replace it with your own */
 }
 
 
@@ -234,10 +330,12 @@ int main()
     //
 
     /* 8< 8< 8< begin-cut-here >8 >8 >8 */
-    printf ("Test 1 %f\n", evaluate ("2.0", true));
-    printf ("Test 2 %f\n", evaluate ("200.0 + 300.0", true));
-    printf ("Test 3 %f\n", evaluate ("10.0 / 5.0", true));
-    printf ("Test 4 %f\n", evaluate ("2.0 + 3.0 * 4.0 - 5.0 / 6.0", true));
+    printf ("Test 1 %f\n", evaluate ("2.0 + 3.0 + 4.0 + 5.0", true));
+    printf ("Test 2 %f\n", evaluate ("2.0 + 3.0 + 4.0 + 5.0", true));
+    printf ("Test 3 %f\n", evaluate ("200.0 + 300.0", true));
+    printf ("Test 4 %f\n", evaluate ("2.0 * 3.0 + 4.0 / 5.0", true));
+    printf ("Test 5 %f\n", evaluate ("2.0 + 3.0 * 4.0 - 5.0 / 6.0", true));
+    printf ("Test 5 %f\n", evaluate ("2.0", true));
     /* add more test of your own */
     /* 8< 8< 8< end-cut-here >8 >8 >8 */
     return 0;
