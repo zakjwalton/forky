@@ -12,16 +12,18 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
+//Macros
 #define DEBUG
+
 #define SIZE 50
 
 #define READ 0
 #define WRITE 1
 
-#define TIME 1
 
 //Type for each node in the expression tree
 typedef struct element_s{
@@ -31,10 +33,28 @@ typedef struct element_s{
     struct element_s* rightChild;
 }element_t;
 
-//Globals
+//Globals related to tree construction
 char** stack;
 int top = -1;
 element_t* treeTop;
+
+bool noPause = false;
+bool sigIntFlag = false;
+bool sigUsrFlag = false;
+
+/*
+ * Signal Handlers
+ */
+void sigIntHandler(int signum)
+{
+    sigIntFlag = true;
+    printf("In sigint handler\n");
+}
+void sigUsrHandler(int signum)
+{
+    sigUsrFlag = true;
+    printf("In sigusr handler\n");
+}
 
 /*
  * Function that prints out an array of strings.
@@ -239,6 +259,9 @@ void printTree(element_t* node)
     }
 }
 
+/*
+ * Free the whole tree starting from the top
+ */
 void freeTree(element_t* node)
 {
     if(node->operator == '=')
@@ -254,30 +277,35 @@ void freeTree(element_t* node)
     return;
 }
 
-
+/*
+ * Function that is called recursively to evaluate the expression tree.
+ */
 float evalExpression(element_t* node)
 {
     float resultLeft;
     float resultRight;
+    bool noLeft, noRight;
     element_t* leftNode = node->leftChild;
     element_t* rightNode = node->rightChild;
-    printf("In recursive function\n");
-    printf("My operator is %c\n",node->operator);
-    printf("Left operator is %c\n",leftNode->operator);
-    printf("Right operator is %c\n",rightNode->operator);
+    int fdl[2];
+    int fdr[2];
+    int statusl;
+    int statusr;
+    pid_t pidl, wpidl;
+    pid_t pidr, wpidr;
 
     //Check left, recurse if necessary
     if(leftNode->operator == '=')
     {
         //Left node is not operator, extract value
         resultLeft = leftNode->value;
+        noLeft = true;
     }
     else
     {
         //Left node is operator, fork and recurse
-        int fdl[2];
-        int statusl;
-        pid_t pidl, wpidl;
+
+        noLeft = false;
         //Create pipe
         if(pipe(fdl) < 0)
         {
@@ -301,7 +329,6 @@ float evalExpression(element_t* node)
             write(fdl[WRITE], (const void *)&resultLeft, (size_t) sizeof(float));
             close(fdl[WRITE]);
             //Exit
-            sleep(TIME);
             freeTree(treeTop);
             exit(0);
         }
@@ -309,21 +336,6 @@ float evalExpression(element_t* node)
         {
             //Close write end of the pipe
             close(fdl[WRITE]);
-            wpidl = wait(&statusl);
-            if(wpidl < 0)
-            {
-                perror("Error while waiting");
-                exit(1);
-            }
-            else
-            {
-                printf("Child terminated, pid: %d\n",wpidl);
-            }
-            read(fdl[READ], (void *)&resultLeft, (size_t) sizeof(float));
-            close(fdl[READ]);
-#ifdef DEBUG
-            printf("Result is %f\n",resultLeft);
-#endif
         }
     }
 
@@ -332,13 +344,12 @@ float evalExpression(element_t* node)
     {
         //Left node is not operator, extract value
         resultRight = rightNode->value;
+        noRight = true;
     }
     else
     {
         //Left node is operator, fork and recurse
-        int fdr[2];
-        int statusr;
-        pid_t pidr, wpidr;
+        noRight = false;
         //Create pipe
         if(pipe(fdr) < 0)
         {
@@ -362,34 +373,76 @@ float evalExpression(element_t* node)
             write(fdr[WRITE], (const void *)&resultRight, (size_t) sizeof(float));
             close(fdr[WRITE]);
             //Exit
-            sleep(TIME);
             exit(0);
         }
         else // Parent
         {
             //Close write end of the pipe
             close(fdr[WRITE]);
-            wpidr = wait(&statusr);
-            if(wpidr < 0)
-            {
-                perror("Error while waiting");
-                exit(1);
-            }
-            else
-            {
-                printf("Child terminated, pid: %d\n",wpidr);
-            }
-            read(fdr[READ], (void *)&resultRight, (size_t) sizeof(float));
-            close(fdr[READ]);
-#ifdef DEBUG
-            printf("Result is %f\n",resultRight);
-#endif
         }
     }
 
+    //Wait for SIGUSR1 from parent to issue signal to child
+    if(!noPause)
+    {
+        sigUsrFlag = false;
+        while(sigUsrFlag == false)
+        {
+            pause();
+        }
+        if(!noLeft)
+        {
+            kill(pidl, SIGUSR1);
+        }
+        if(!noRight)
+        {
+            kill(pidr, SIGUSR1);
+        }
+    }
+
+    //wait on left
+    if(!noLeft)
+    {
+        wpidl = waitpid(pidl, &statusl, 0);
+        if(wpidl < 0)
+        {
+            perror("Error while waiting");
+            exit(1);
+        }
+        else
+        {
+            printf("Child terminated, pid: %d\n",wpidl);
+        }
+        //Read left result
+        read(fdl[READ], (void *)&resultLeft, (size_t) sizeof(float));
+        close(fdl[READ]);
+#ifdef DEBUG
+        printf("Result is %f\n",resultLeft);
+#endif
+    }
+
+    //wait on right
+    if(!noRight)
+    {
+        wpidr = waitpid(pidr, &statusr, 0);
+        if(wpidr < 0)
+        {
+            perror("Error while waiting");
+            exit(1);
+        }
+        else
+        {
+            printf("Child terminated, pid: %d\n",wpidr);
+        }
+        //Read right result
+        read(fdr[READ], (void *)&resultRight, (size_t) sizeof(float));
+        close(fdr[READ]);
+#ifdef DEBUG
+        printf("Result is %f\n",resultRight);
+#endif
+    }
+
     //compute and return result
-
-
     //Return case based on operator
     switch(node->operator)
     {
@@ -417,6 +470,10 @@ float evalExpression(element_t* node)
     }
 }
 
+/*
+ * Main evaluate function.  Takes in an infix expression and whether or not to
+ * evaluate the expression immediately or not.
+ */
 float evaluate(const char* expr, bool immediate_result)
 {
     char** prefix;
@@ -426,6 +483,13 @@ float evaluate(const char* expr, bool immediate_result)
     int fd[2];
     float result;
     pid_t pid, wpid;
+
+    //set pause
+    noPause = immediate_result;
+
+    //register signals
+    signal(SIGINT, sigIntHandler);
+    signal(SIGUSR1, sigUsrHandler);
 
     //Copy in input string
     strcpy(inputStr, expr);
@@ -468,15 +532,27 @@ float evaluate(const char* expr, bool immediate_result)
             //Write result to pipe
             write(fd[WRITE], (const void *)&result, (size_t) sizeof(float));
             close(fd[WRITE]);
-            //Exit
-            sleep(TIME);
+            //Wait for signal from parent to terminate
             exit(0);
         }
         else // Parent
         {
             //Close write end of the pipe
             close(fd[WRITE]);
-            wpid = wait(&status);
+
+            //Wait on SIGINT, then notify child if pause enabled
+            if(!noPause)
+            {
+                sigIntFlag = false;
+                while(sigIntFlag == false)
+                {
+                    pause();
+                }
+                kill(pid, SIGUSR1);
+            }
+
+            //Wait for child to exit
+            wpid = waitpid(pid, &status, 0);
             if(wpid < 0)
             {
                 perror("Error while waiting");
@@ -486,6 +562,8 @@ float evaluate(const char* expr, bool immediate_result)
             {
                 printf("Child terminated, pid: %d\n",wpid);
             }
+
+            //Read in result from pipe
             read(fd[READ], (void *)&result, (size_t) sizeof(float));
             close(fd[READ]);
 #ifdef DEBUG
@@ -503,17 +581,13 @@ float evaluate(const char* expr, bool immediate_result)
 int main()
 {
 
-    //
-    // you may add more code here
-    //
-
     /* 8< 8< 8< begin-cut-here >8 >8 >8 */
-    printf ("Test 1 %f\n", evaluate ("2.0 + 3.0 + 4.0 + 5.0", true));
-    printf ("Test 2 %f\n", evaluate ("2.0 + 3.0 + 4.0 + 5.0", true));
-    printf ("Test 3 %f\n", evaluate ("200.0 + 300.0", true));
-    printf ("Test 4 %f\n", evaluate ("2.0 * 3.0 + 4.0 / 5.0", true));
-    printf ("Test 5 %f\n", evaluate ("2.0 + 3.0 * 4.0 - 5.0 / 6.0", true));
-    printf ("Test 5 %f\n", evaluate ("2.0 + 15.0", true));
+    printf ("Test 1 %f\n", evaluate ("2.0 + 3.0 + 4.0 + 5.0", false));
+    printf ("Test 2 %f\n", evaluate ("2.0 + 3.0 + 4.0 + 5.0", false));
+    printf ("Test 3 %f\n", evaluate ("200.0 + 300.0", false));
+    printf ("Test 4 %f\n", evaluate ("2.0 * 3.0 + 4.0 / 5.0", false));
+    printf ("Test 5 %f\n", evaluate ("2.0 + 3.0 * 4.0 - 5.0 / 6.0", false));
+    printf ("Test 5 %f\n", evaluate ("2.0 + 15.0", false));
     /* add more test of your own */
     /* 8< 8< 8< end-cut-here >8 >8 >8 */
     return 0;
