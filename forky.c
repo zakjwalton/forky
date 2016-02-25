@@ -15,11 +15,13 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-//#define DEBUG
+#define DEBUG
 #define SIZE 50
 
 #define READ 0
 #define WRITE 1
+
+#define TIME 1
 
 //Type for each node in the expression tree
 typedef struct element_s{
@@ -32,6 +34,7 @@ typedef struct element_s{
 //Globals
 char** stack;
 int top = -1;
+element_t* treeTop;
 
 /*
  * Function that prints out an array of strings.
@@ -254,13 +257,168 @@ void freeTree(element_t* node)
 
 float evalExpression(element_t* node)
 {
-    return 23.00;
+    float resultLeft;
+    float resultRight;
+    element_t* leftNode = node->leftChild;
+    element_t* rightNode = node->rightChild;
+    printf("In recursive function\n");
+    printf("My operator is %c\n",node->operator);
+    printf("Left operator is %c\n",leftNode->operator);
+    printf("Right operator is %c\n",rightNode->operator);
 
+    //Check left, recurse if necessary
+    if(leftNode->operator == '=')
+    {
+        //Left node is not operator, extract value
+        resultLeft = leftNode->value;
+    }
+    else
+    {
+        //Left node is operator, fork and recurse
+        int fdl[2];
+        int statusl;
+        pid_t pidl, wpidl;
+        //Create pipe
+        if(pipe(fdl) < 0)
+        {
+            perror("Problem creating the pipe");
+            exit(1);
+        }
+
+        //Fork for top operator
+        if((pidl = fork()) < 0)
+        {
+            perror("fork failed");
+            exit(1);
+        }
+        else if(pidl == 0) // Child
+        {
+            //Close read end of pipe
+            close(fdl[READ]);
+            //Evaluate expression
+            resultLeft = evalExpression(leftNode);
+            //Write result to pipe
+            write(fdl[WRITE], (const void *)&resultLeft, (size_t) sizeof(float));
+            close(fdl[WRITE]);
+            //Exit
+            sleep(TIME);
+            freeTree(treeTop);
+            exit(0);
+        }
+        else // Parent
+        {
+            //Close write end of the pipe
+            close(fdl[WRITE]);
+            wpidl = wait(&statusl);
+            if(wpidl < 0)
+            {
+                perror("Error while waiting");
+                exit(1);
+            }
+            else
+            {
+                printf("Child terminated, pid: %d\n",wpidl);
+            }
+            read(fdl[READ], (void *)&resultLeft, (size_t) sizeof(float));
+            close(fdl[READ]);
+#ifdef DEBUG
+            printf("Result is %f\n",resultLeft);
+#endif
+        }
+    }
+
+    //Check right, recurse if necessary
+    if(rightNode->operator == '=')
+    {
+        //Left node is not operator, extract value
+        resultRight = rightNode->value;
+    }
+    else
+    {
+        //Left node is operator, fork and recurse
+        int fdr[2];
+        int statusr;
+        pid_t pidr, wpidr;
+        //Create pipe
+        if(pipe(fdr) < 0)
+        {
+            perror("Problem creating the pipe");
+            exit(1);
+        }
+
+        //Fork for top operator
+        if((pidr = fork()) < 0)
+        {
+            perror("fork failed");
+            exit(1);
+        }
+        else if(pidr == 0) // Child
+        {
+            //Close read end of pipe
+            close(fdr[READ]);
+            //Evaluate expression
+            resultRight = evalExpression(rightNode);
+            //Write result to pipe
+            write(fdr[WRITE], (const void *)&resultRight, (size_t) sizeof(float));
+            close(fdr[WRITE]);
+            //Exit
+            sleep(TIME);
+            exit(0);
+        }
+        else // Parent
+        {
+            //Close write end of the pipe
+            close(fdr[WRITE]);
+            wpidr = wait(&statusr);
+            if(wpidr < 0)
+            {
+                perror("Error while waiting");
+                exit(1);
+            }
+            else
+            {
+                printf("Child terminated, pid: %d\n",wpidr);
+            }
+            read(fdr[READ], (void *)&resultRight, (size_t) sizeof(float));
+            close(fdr[READ]);
+#ifdef DEBUG
+            printf("Result is %f\n",resultRight);
+#endif
+        }
+    }
+
+    //compute and return result
+
+
+    //Return case based on operator
+    switch(node->operator)
+    {
+    case '/':
+        //Free whole tree
+        freeTree(treeTop);
+        return resultLeft / resultRight;
+    case '*':
+        //Free whole tree
+        freeTree(treeTop);
+        return resultLeft * resultRight;
+    case '-':
+        //Free whole tree
+        freeTree(treeTop);
+        return resultLeft - resultRight;
+    case '+':
+        //Free whole tree
+        freeTree(treeTop);
+        return resultLeft + resultRight;
+    default:
+        //Free whole tree
+        freeTree(treeTop);
+        printf("Error, invalid operator\n");
+        return 0.0;
+    }
 }
 
 float evaluate(const char* expr, bool immediate_result)
 {
-    element_t* treeTop;
     char** prefix;
     char inputStr[strlen(expr)+1];
     int size;
@@ -280,7 +438,6 @@ float evaluate(const char* expr, bool immediate_result)
     printTree(treeTop);
 #endif
 
-    printf("Willy nilly\n");
     //No operators in the tree
     if(treeTop->operator == '=')
     {
@@ -312,8 +469,7 @@ float evaluate(const char* expr, bool immediate_result)
             write(fd[WRITE], (const void *)&result, (size_t) sizeof(float));
             close(fd[WRITE]);
             //Exit
-            sleep(1);
-            freeTree(treeTop);
+            sleep(TIME);
             exit(0);
         }
         else // Parent
